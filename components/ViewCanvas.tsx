@@ -1,7 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import React, { useEffect, useState } from "react";
-import { OrbitControls, View } from "@react-three/drei";
+import { View } from "@react-three/drei";
 import Rig from "./Rig";
 
 const ViewCanvas = () => {
