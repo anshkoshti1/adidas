@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 import gsap from "gsap";
 import { shirtColors } from "@/lib/colors";
+import { useMediaQuery } from "react-responsive";
 
 type GLTFResult = {
   nodes: {
@@ -19,6 +20,8 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
     "/models/ShirtScrolling.glb"
   ) as unknown as GLTFResult;
 
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
   const texture = useShirtSectionTextures(shirtType, "second");
   const materials = createMaterial(texture) as Record<
     TextureKey<typeof shirtType, "second">,
@@ -29,7 +32,7 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
   const marqueeText2Ref = useRef<THREE.Mesh>(null);
   const marqueeText2DupRef = useRef<THREE.Mesh>(null);
 
-  const getTexColor = ()=>shirtColors[shirtType]?.text ?? "black"
+  const getTexColor = () => shirtColors[shirtType]?.text ?? "black";
   const textsMaterial = new THREE.MeshBasicMaterial({
     color: getTexColor(),
     transparent: true,
@@ -80,10 +83,10 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
     });
   });
   return (
-    <group dispose={null}>
+    <group dispose={null} scale={isMobile ? 1.5 : 2.2}>
       <mesh geometry={nodes.Shirt.geometry} material={materials.shirt} />
       <mesh geometry={nodes.Sphere_ENV.geometry} material={materials.sphere} />
-      
+
       <group>
         {Object.entries(nodes)
           .filter(([key]) => key.startsWith("Texts"))
@@ -96,7 +99,7 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
             />
           ))}
       </group>
-      
+
       <mesh
         ref={marqueeText1Ref}
         geometry={nodes.Marquee_Top_Bottom.geometry}

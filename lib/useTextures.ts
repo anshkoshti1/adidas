@@ -1,5 +1,6 @@
-import { useTexture } from "@react-three/drei";
-import { SectionType, ShirtType, studioTextures } from "./textures";
+import { environmentPaths, ShirtType, videotextures } from "@/lib/textures";
+import { useCubeTexture, useTexture, useVideoTexture } from "@react-three/drei";
+import { SectionType, studioTextures } from "./textures";
 import * as THREE from "three";
 
 export const useMainStudioTextures = () => {
@@ -15,12 +16,25 @@ export const useShirtSectionTextures = (
   return useModifiedTextures(paths, setModifier);
 };
 
+export const useShirtEnvCube = (shirtType: ShirtType) => {
+  const path = environmentPaths[shirtType];
+  return useCubeTexture(
+    ["px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"],
+    { path }
+  );
+};
+
+export const useShirtVideoTexture = (shirtType: ShirtType) => {
+  const path = videotextures[shirtType];
+  return useVideoTexture(path);
+}
+
 function useModifiedTextures(
   paths: Record<string, string>,
   setModifier: boolean
 ) {
   const textures = useTexture(paths);
-  if(setModifier) {
+  if (setModifier) {
     Object.values(textures).forEach((text) => {
       text.flipY = false;
       text.colorSpace = THREE.SRGBColorSpace;
