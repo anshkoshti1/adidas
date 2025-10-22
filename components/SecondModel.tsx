@@ -1,10 +1,10 @@
 import * as THREE from "three";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, useMask } from "@react-three/drei";
 import { ShirtType, TextureKey } from "@/lib/textures";
 import { useShirtSectionTextures } from "@/lib/useTextures";
 import { createMaterial } from "@/lib/materials";
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
+import { RefObject, useRef } from "react";
 import gsap from "gsap";
 import { shirtColors } from "@/lib/colors";
 import { useMediaQuery } from "react-responsive";
@@ -20,10 +20,12 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
     "/models/ShirtScrolling.glb"
   ) as unknown as GLTFResult;
 
+  const stencil = useMask(1, true);
+
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   const texture = useShirtSectionTextures(shirtType, "second");
-  const materials = createMaterial(texture) as Record<
+  const materials = createMaterial(texture, stencil) as Record<
     TextureKey<typeof shirtType, "second">,
     THREE.MeshBasicMaterial
   >;
@@ -32,22 +34,50 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
   const marqueeText2Ref = useRef<THREE.Mesh>(null);
   const marqueeText2DupRef = useRef<THREE.Mesh>(null);
 
+  const groupRef = useRef<THREE.Group>(null);
+  const textsRef = useRef<THREE.Group>(null);
+
   const getTexColor = () => shirtColors[shirtType]?.text ?? "black";
   const textsMaterial = new THREE.MeshBasicMaterial({
     color: getTexColor(),
     transparent: true,
     opacity: 1,
+    ...stencil,
   });
 
   const marqueeMaterial = new THREE.MeshBasicMaterial({
     color: getTexColor(),
     transparent: true,
-    opacity: 1,
+    opacity: 0,
+    ...stencil,
   });
 
   const TOP_BOTTOM_TEXT_WIDTH = 5.7;
   const MIDDLE_TEXT_WIDTH = 6.2;
   const DURATION = 50;
+
+  useGSAP(() => {
+    if (!groupRef.current) return;
+    gsap
+      .timeline({
+        scrollTrigger: {
+          trigger: "#second-section",
+          start: "top top",
+          end: "600% top",
+          scrub: 1,
+          pin: true,
+        },
+      })
+      .to(groupRef.current.rotation, { x: 0, duration: 0.2 })
+      .to(groupRef.current.position, { y: 0.7, duration: 0.8 }, "<")
+      .to(groupRef.current.rotation, { y: -Math.PI * 2, duration: 0.8 }, "<")
+      .to(groupRef.current.scale, { x: 1, y: 1, z: 1, duration: 0.1 })
+      .to(textsMaterial, { opacity: 0, duration: 0.05 }, "<")
+      .to(marqueeMaterial, { opacity: 0.2, duration: 0.05 }, "<")
+      .to(groupRef.current.position, { y: 0.7 })
+      .add(animateTexts(textsRef).duration(0.5), 0);
+  }, []);
+
   useGSAP(() => {
     if (
       !marqueeText1Ref.current ||
@@ -82,12 +112,48 @@ export function SecondModel({ shirtType }: { shirtType: ShirtType }) {
       repeat: -1,
     });
   });
+
+  const animateTexts = (textsRef: RefObject<THREE.Group | null>) => {
+    if (!textsRef.current) return gsap.timeline();
+    const meshes = textsRef.current.children as THREE.Mesh[];
+
+    const tl = gsap.timeline();
+    meshes.forEach((mesh, index) => {
+      tl.from(
+        mesh.scale,
+        {
+          x: 0,
+          y: 0,
+          z: 0,
+          duration: 1,
+          ease: "circ.out",
+        },
+        index * 0.1
+      );
+      tl.from(
+        mesh.position,
+        {
+          y: "+=0.04",
+          duration: 1,
+          ease: "back.out",
+        },
+        index * 0.1
+      );
+    });
+    return tl;
+  };
   return (
-    <group dispose={null} scale={isMobile ? 1.5 : 2.2}>
+    <group
+      ref={groupRef}
+      dispose={null}
+      scale={isMobile ? 1.5 : 2.2}
+      rotation={[Math.PI / 8, Math.PI / 3, 0]}
+      position-y={0.1}
+    >
       <mesh geometry={nodes.Shirt.geometry} material={materials.shirt} />
       <mesh geometry={nodes.Sphere_ENV.geometry} material={materials.sphere} />
 
-      <group>
+      <group ref={textsRef}>
         {Object.entries(nodes)
           .filter(([key]) => key.startsWith("Texts"))
           .map(([key, node]) => (
