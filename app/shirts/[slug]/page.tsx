@@ -1,7 +1,8 @@
-'use client';
+"use client";
 import { notFound, useParams } from "next/navigation";
 import Scene from "@/components/Scene";
 import { ShirtType } from "@/lib/textures";
+import ScrollIndicator from "@/components/ScrollIndicator";
 
 const page = () => {
   const params = useParams();
@@ -10,6 +11,7 @@ const page = () => {
   return (
     <>
       <Scene shirtType={shirtType} />
+      <ScrollIndicator shirtType={shirtType} />
     </>
   );
 };
