@@ -4,7 +4,7 @@ import Scene from "@/components/Scene";
 import { ShirtType } from "@/lib/textures";
 import ScrollIndicator from "@/components/ScrollIndicator";
 
-const page = () => {
+const Page = () => {
   const params = useParams();
   const shirtType = params?.slug as ShirtType;
   if (!shirtType) return notFound();
@@ -16,4 +16,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

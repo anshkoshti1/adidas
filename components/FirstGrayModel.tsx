@@ -48,5 +48,3 @@ export function FirstGrayModel() {
     </group>
   );
 }
-
-useGLTF.preload("/models/gray/GrayStudio.glb");

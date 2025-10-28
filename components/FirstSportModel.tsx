@@ -53,5 +53,3 @@ export function FirstSportModel() {
     </group>
   );
 }
-
-useGLTF.preload("/models/sport/SportStudio.glb");

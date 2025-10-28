@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useMainStudioTextures } from "@/lib/useTextures";
@@ -31,36 +31,41 @@ export function MainStudioModel({
     THREE.MeshBasicMaterial
   >;
 
-  const shirts = [
-    {
-      position: [0.65, 0.7, -0.45] as [number, number, number],
-      rotation: [0, Math.PI / 9, 0] as [number, number, number],
-      geometry: nodes.Shirt_White.geometry,
-      material: materials.whiteShirt,
-      hoverMaterial: materials.whiteStudio,
-      slug: "white",
-    },
-    {
-      position: [0, 0.7, 0] as [number, number, number],
-      rotation: [0, 0, 0] as [number, number, number],
-      geometry: nodes.Shirt_Sport.geometry,
-      material: materials.sportShirt,
-      hoverMaterial: materials.redStudio,
-      slug: "sport",
-    },
-    {
-      position: [-0.65, 0.7, -0.45] as [number, number, number],
-      rotation: [0, -Math.PI / 9, 0] as [number, number, number],
-      geometry: nodes.Shirt_Gray.geometry,
-      material: materials.grayShirt,
-      hoverMaterial: materials.grayStudio,
-      slug: "gray",
-    },
-  ];
+  const shirts = useMemo(
+    () => [
+      {
+        position: [0.65, 0.7, -0.45] as [number, number, number],
+        rotation: [0, Math.PI / 9, 0] as [number, number, number],
+        geometry: nodes.Shirt_White.geometry,
+        material: materials.whiteShirt,
+        hoverMaterial: materials.whiteStudio,
+        slug: "white",
+      },
+      {
+        position: [0, 0.7, 0] as [number, number, number],
+        rotation: [0, 0, 0] as [number, number, number],
+        geometry: nodes.Shirt_Sport.geometry,
+        material: materials.sportShirt,
+        hoverMaterial: materials.redStudio,
+        slug: "sport",
+      },
+      {
+        position: [-0.65, 0.7, -0.45] as [number, number, number],
+        rotation: [0, -Math.PI / 9, 0] as [number, number, number],
+        geometry: nodes.Shirt_Gray.geometry,
+        material: materials.grayShirt,
+        hoverMaterial: materials.grayStudio,
+        slug: "gray",
+      },
+    ],
+    [nodes, materials]
+  );
 
   const [envMaterial, setEnvMaterial] = useState<THREE.MeshBasicMaterial>(
     materials.defaultStudio
   );
+
+  const groupRef = useRef<THREE.Group>(null);
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
   const tlRefs = useRef<GSAPTimeline[]>([]);
   const router = useRouter();
@@ -68,7 +73,37 @@ export function MainStudioModel({
     shirts.forEach((shirt) => {
       router.prefetch(`shirts/${shirt.slug}`);
     });
-  }, [router]);
+  }, [router, shirts]);
+
+  useGSAP(() => {
+    const hasAnimationRun = sessionStorage.getItem("mainStudioAnimationRun");
+    if (!groupRef.current || hasAnimationRun) return;
+    gsap.from(groupRef.current.position, {
+      y: -0.15,
+      z: 2,
+      duration: 4,
+      ease: "power4.inOut",
+      onComplete: () => {
+        sessionStorage.setItem("mainStudioAnimationRun", "true");
+      },
+    });
+
+    meshRefs.current.forEach((shirt, i) => {
+      if (!shirt) return;
+      gsap.from(shirt.position, {
+        x: shirt.position.x * 2,
+        delay: 1,
+        duration: 3,
+        ease: "power2.out",
+      });
+      gsap.from(shirt.rotation, {
+        y: shirt.rotation.y * 4,
+        delay: 1,
+        duration: 3,
+        ease: "power2.out",
+      });
+    });
+  });
 
   useGSAP(() => {
     if (!meshRefs.current) return;
@@ -137,7 +172,7 @@ export function MainStudioModel({
     router.push(`shirts/${slug}`);
   }
   return (
-    <group dispose={null} scale={scale}>
+    <group ref={groupRef} dispose={null} scale={scale}>
       <mesh
         castShadow
         receiveShadow
@@ -169,5 +204,3 @@ export function MainStudioModel({
     </group>
   );
 }
-
-useGLTF.preload("/models/main/MainStudio.glb");
